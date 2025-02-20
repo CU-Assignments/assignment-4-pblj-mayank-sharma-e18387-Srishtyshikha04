@@ -1,0 +1,74 @@
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
+
+class TicketBooking {
+    private final int totalSeats;
+    private int availableSeats;
+    private final Lock lock = new ReentrantLock();
+
+    public TicketBooking(int totalSeats) {
+        this.totalSeats = totalSeats;
+        this.availableSeats = totalSeats;
+    }
+
+    public void bookTicket(String customerName, boolean isVIP) {
+        lock.lock(); // Acquire the lock
+        try {
+            if (availableSeats > 0) {
+                System.out.println(customerName + " booked a ticket. (VIP: " + isVIP + ")");
+                availableSeats--;
+                System.out.println("Available seats: " + availableSeats);
+            } else {
+                System.out.println("No available seats for " + customerName + ".");
+            }
+        } finally {
+            lock.unlock(); // Release the lock
+        }
+    }
+}
+
+class BookingThread extends Thread {
+    private final TicketBooking ticketBooking;
+    private final String customerName;
+    private final boolean isVIP;
+
+    public BookingThread(TicketBooking ticketBooking, String customerName, boolean isVIP) {
+        this.ticketBooking = ticketBooking;
+        this.customerName = customerName;
+        this.isVIP = isVIP;
+    }
+
+    @Override
+    public void run() {
+        ticketBooking.bookTicket(customerName, isVIP);
+    }
+}
+
+public class TicketBookingSystem {
+    public static void main(String[] args) {
+        TicketBooking ticketBooking = new TicketBooking(5); // Total 5 seats
+
+        // Create VIP booking threads
+        BookingThread vip1 = new BookingThread(ticketBooking, "VIP Customer 1", true);
+        BookingThread vip2 = new BookingThread(ticketBooking, "VIP Customer 2", true);
+        
+        // Create regular booking threads
+        BookingThread regular1 = new BookingThread(ticketBooking, "Regular Customer 1", false);
+        BookingThread regular2 = new BookingThread(ticketBooking, "Regular Customer 2", false);
+        BookingThread regular3 = new BookingThread(ticketBooking, "Regular Customer 3", false);
+
+        // Set thread priorities
+        vip1.setPriority(Thread.MAX_PRIORITY);
+        vip2.setPriority(Thread.MAX_PRIORITY);
+        regular1.setPriority(Thread.NORM_PRIORITY);
+        regular2.setPriority(Thread.NORM_PRIORITY);
+        regular3.setPriority(Thread.NORM_PRIORITY);
+
+        // Start the threads
+        vip1.start();
+        vip2.start();
+        regular1.start();
+        regular2.start();
+        regular3.start();
+    }
+}
